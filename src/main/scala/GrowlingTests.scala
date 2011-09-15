@@ -9,6 +9,7 @@ object GrowlingTests extends Plugin {
   val Growl = config("growl") extend(Runtime)
 
   val images = SettingKey[GrowlTestImages]("images", "Object defining paths of test images used for growl notification.")
+  val NYAN_ENABLED = SettingKey[Boolean]("nyan-enabled", "Determines if things should be nyan-ified.")
   val exceptionFormatter = SettingKey[(String, Throwable) => GrowlResultFormat]("exception-formatter", "Function used to format test exception.")
   val groupFormatter = SettingKey[(GroupResult => GrowlResultFormat)]("group-formatter", "Function used to format a test group result.")
   val aggregateFormatter = SettingKey[(AggregateResult => GrowlResultFormat)]("aggregate-formatter", "Function used to format an aggregation of test results.")
@@ -24,6 +25,7 @@ object GrowlingTests extends Plugin {
     }
 
   def growlSettings: Seq[Setting[_]] = inConfig(Growl)(Seq(
+    NYAN_ENABLED := false,
     images <<= defaultImagePath apply { path =>
       def setIfExists(name: String) = {
         val file = path / name
@@ -39,6 +41,7 @@ object GrowlingTests extends Plugin {
       )
     },
     growler := Growler(),
+    growler <<= (growler, NYAN_ENABLED) apply ((g,n) => if(n) NyanCat.wrap(g) else g),
     groupFormatter <<= (images) {
       (imgs) =>
         (res: GroupResult) =>
